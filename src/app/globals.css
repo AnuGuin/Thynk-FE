@@ -173,3 +173,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* IntroRust font used for the Thynk wordmark in the sidebar (place the file at /public/fonts/IntroRust.otf) */
+@font-face {
+  font-family: 'IntroRust';
+  src: url('/fonts/IntroRust.otf') format('opentype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.intro-rust {
+  font-family: 'IntroRust', var(--font-sans);
+}
