@@ -3,6 +3,9 @@
 import React, { useState } from "react"
 import { Search } from "lucide-react"
 import { HoverBorderGradient } from "../../ui/hover-border-gradient"
+import { ThemeToggle } from "../../../provider/theme-toggle"
+import Link from "next/link"
+import Icons from "../../logos/logo"
 
 interface MarketNavbarProps {
   onSearch?: (searchTerm: string) => void
@@ -25,7 +28,7 @@ export const MarketNavbar: React.FC<MarketNavbarProps> = ({ onSearch }) => {
   }
 
   return (
-    <nav className="sticky top-0 z-10 flex items-center justify-between bg-white px-6 py-4">
+    <nav className="sticky top-0 z-10 flex items-center justify-between bg-white px-6 py-4 dark:bg-neutral-900 dark:text-white">
       {/* Search Bar */}
       <div className="flex flex-1 items-center">
         <div className="relative w-full max-w-md">
@@ -43,13 +46,29 @@ export const MarketNavbar: React.FC<MarketNavbarProps> = ({ onSearch }) => {
         </div>
       </div>
 
-      {/* Sign Up Button */}
-      <div className="ml-4">
+      {/* Add Market Button + Sign Up Button + Theme Toggle */}
+      <div className="ml-4 flex items-center gap-3">
+        <ThemeToggle />
+
+        <Link href="/market/add" className="rounded-full">
+          <HoverBorderGradient
+            containerClassName="rounded-full"
+            className="flex items-center space-x-2 bg-white px-4 py-2 text-sm font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
+            aria-label="Add market"
+          >
+            <div className="flex items-center space-x-2">
+              <Icons.AddMarketLight className="h-4 w-4 text-neutral-700 dark:text-neutral-200" />
+              <span>Add Market</span>
+            </div>
+          </HoverBorderGradient>
+        </Link>
+
         <HoverBorderGradient
           containerClassName="rounded-full"
           as="button"
           onClick={handleSignUp}
-          className="flex items-center space-x-2 bg-white px-6 py-2 text-sm font-medium text-black dark:bg-black dark:text-white"
+          className="flex items-center space-x-2 bg-white px-6 py-2 text-sm font-medium text-neutral-900 dark:bg-neutral-800 dark:text-white"
+          aria-label="Sign in"
         >
           <span>Sign In</span>
         </HoverBorderGradient>

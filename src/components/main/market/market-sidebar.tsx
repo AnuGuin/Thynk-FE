@@ -1,3 +1,6 @@
+// ============================================
+// FILE: components/market/market-sidebar.tsx
+// ============================================
 "use client"
 
 import React from "react"
@@ -6,16 +9,31 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarBody, SidebarLink } from "../../ui/sidebar"
 import Icons from "../../logos/logo"
+import { useTheme } from "next-themes"
 import { motion } from "motion/react"
 
 const links = [
-  { label: "Home", href: "/", icon: <Icons.HomeLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
-  { label: "Market", href: "/market", icon: <Icons.MarketLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
-  { label: "Add Market", href: "/market/add", icon: <Icons.AddMarketLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
-  { label: "Leaderboard", href: "/leaderboard", icon: <Icons.LeaderBoardLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
+  { 
+    label: "Home", 
+    href: "/", 
+    icon: <Icons.HomeLight className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" /> 
+  },
+  { 
+    label: "Market", 
+    href: "/market", 
+    icon: <Icons.MarketLight className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" /> 
+  },
+  { 
+    label: "Leaderboard", 
+    href: "/leaderboard", 
+    icon: <Icons.LeaderBoardLight className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" /> 
+  },
 ]
 
 const Logo = () => {
+  const { resolvedTheme } = useTheme()
+  const src = resolvedTheme === "dark" ? "/1-darklogo.png" : "/2-lightlogo.png"
+
   return (
     <Link
       href="/"
@@ -23,8 +41,8 @@ const Logo = () => {
     >
       <div className="h-10 w-10 shrink-0 text-neutral-700 dark:text-neutral-200">
         <Image
-          src="/2-lightlogo.png"
-          alt="Thynk logo"
+          src={src}
+          alt={`Thynk logo ${resolvedTheme ?? "light"}`}
           width={40}
           height={40}
           className="h-10 w-10 object-contain"
@@ -43,6 +61,9 @@ const Logo = () => {
 }
 
 const LogoIcon = () => {
+  const { resolvedTheme } = useTheme()
+  const src = resolvedTheme === "dark" ? "/1-darklogo.png" : "/2-lightlogo.png"
+
   return (
     <Link
       href="/"
@@ -50,8 +71,8 @@ const LogoIcon = () => {
     >
       <div className="h-10 w-10 shrink-0 text-neutral-700 dark:text-neutral-200">
         <Image
-          src="/2-lightlogo.png"
-          alt="Thynk logo"
+          src={src}
+          alt={`Thynk logo ${resolvedTheme ?? "light"}`}
           width={40}
           height={40}
           className="h-10 w-10 object-contain"

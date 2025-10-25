@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 interface ThemeProviderProps {
   children: React.ReactNode
@@ -12,5 +13,22 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+  // Create a stable QueryClient instance per session to be used by
+  // thirdweb/react hooks and other react-query consumers.
+  const [queryClient] = React.useState(() =>
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          // don't refetch on window focus by default
+          refetchOnWindowFocus: false,
+        },
+      },
+    })
+  )
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NextThemesProvider {...props}>{children}</NextThemesProvider>
+    </QueryClientProvider>
+  )
 }

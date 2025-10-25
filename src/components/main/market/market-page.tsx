@@ -1,59 +1,128 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import AppLayout from "../../app-layout/app-layout"
-
+import React, { useState, useEffect } from "react"
+import AppLayout from "@/components/app-layout/app-layout"
+import SmoothTab from "@/components/ui/smooth-tab"
+import SortComponent from "@/components/main/misc/market-sort"
+import { MarketCard } from "@/components/main/misc/market-card"
+import { ProposeMarketForm } from "@/components/main/misc/propose-market"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import { useReadContract } from "thirdweb/react"
+import { contract } from "@/constant/contract"
 
 export default function MarketPage() {
-  const [marketData, setMarketData] = useState(() =>
-    [1, 2, 3, 4, 5].map((item) => ({
-      id: item,
-      percentage: Math.floor(Math.random() * 100)
-    }))
-  )
+  const [activeTab, setActiveTab] = useState<'active' | 'pending' | 'resolved'>('active')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<string>('newest')
+  const [filterTag, setFilterTag] = useState<string>('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  // initial percentages are set in the useState initializer; no effect needed
+  // Get total number of markets
+  const { data: marketCount, refetch: refetchMarketCount } = useReadContract({
+    contract,
+    method: "function nextMarketId() view returns (uint256)",
+    params: [],
+  })
+
+  const totalMarkets = marketCount ? Number(marketCount) : 0
+
+  // Auto-refresh market count every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchMarketCount()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [refetchMarketCount])
+
+  const handleMarketCreated = () => {
+    setRefreshKey(prev => prev + 1)
+    refetchMarketCount()
+  }
+
+  const handleSortChange = (sort: { tag?: string; timing?: string }) => {
+    if (sort.tag) setFilterTag(sort.tag)
+    if (sort.timing) setSortBy(sort.timing.toLowerCase())
+  }
+
+  // Generate array of market indices (newest first by default)
+  const getMarketIndices = () => {
+    const indices = Array.from({ length: totalMarkets }, (_, i) => totalMarkets - 1 - i)
+    
+    // Apply timing sort
+    if (sortBy === 'oldest') {
+      return indices.reverse()
+    }
+    // For 'trending' and 'ending', we'll rely on the natural order for now
+    // You can implement more complex sorting logic based on volume or end time
+    
+    return indices
+  }
+
+  const marketIndices = getMarketIndices()
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-neutral-800 dark:text-white">
-            Markets
-          </h1>
-          <p className="mt-2 text-neutral-600 dark:text-neutral-300">
-            Browse and trade on prediction markets
-          </p>
+      <div className="flex h-full flex-col space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-neutral-800 dark:text-white">
+              Markets
+            </h1>
+            <p className="mt-2 text-neutral-600 dark:text-neutral-300">
+              Browse and trade on prediction markets
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-linear-to-r from-purple-500 to-pink-500 font-medium text-white transition-all hover:from-purple-600 hover:to-pink-600 hover:shadow-lg"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Market
+          </Button>
         </div>
 
-        <div className="space-y-4">
-          {/* Example market listings */}
-          {marketData.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-neutral-800 dark:text-white">
-                    Market Question {item.id}
-                  </h3>
-                  <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                    This is a sample market description. Users can bet on the outcome of this prediction.
-                  </p>
-                </div>
-                <div className="ml-4 text-right">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {item.percentage}%
-                  </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Yes probability
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Smooth Tabs and Sort */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <SmoothTab
+              activeTab={activeTab}
+              onChange={(tab) => setActiveTab(tab as 'active' | 'pending' | 'resolved')}
+            />
+          </div>
+          <div className="shrink-0">
+            <SortComponent onSortChange={handleSortChange} />
+          </div>
         </div>
+
+        {/* Market Cards Grid */}
+        <div className="flex-1 overflow-auto">
+          <div className="grid gap-6 pb-6 md:grid-cols-2 lg:grid-cols-3">
+            {marketIndices.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-lg text-neutral-600 dark:text-neutral-400">
+                  No markets yet. Be the first to create one!
+                </p>
+              </div>
+            ) : (
+              marketIndices.map((index) => (
+                <MarketCard
+                  key={`${index}-${refreshKey}`}
+                  index={index}
+                  filter={activeTab}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Propose Market Modal */}
+        <ProposeMarketForm
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onMarketCreated={handleMarketCreated}
+        />
       </div>
     </AppLayout>
   )
