@@ -1,36 +1,161 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+ # Thynk Frontend
 
-## Getting Started
+ This project is a Next.js application for Thynk, featuring a modular component architecture and organized page structure. Below you'll find instructions on how to use the components and pages in your development workflow.
 
-First, run the development server:
+ ## Table of Contents
+ - [Project Structure](#project-structure)
+ - [Getting Started](#getting-started)
+ - [Components Usage](#components-usage)
+ - [Pages Usage](#pages-usage)
+ - [Custom Hooks & Context](#custom-hooks--context)
+ - [Utilities](#utilities)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+ ---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ ## Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+ ```
+ components.json
+ src/
+	 app/
+		 client.ts
+		 globals.css
+		 layout.tsx
+		 page.tsx
+		 api/
+			 markets/route.ts
+	 components/
+		 app-layout/
+		 logos/
+		 main/
+			 hero/
+			 market/
+			 misc/
+		 ui/
+		 constant/
+		 context/
+		 hooks/
+		 lib/
+		 provider/
+ ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ - **src/app/**: Contains main application files, global styles, and API routes.
+ - **src/components/**: Contains reusable UI and feature components, organized by domain.
+ - **src/components/ui/**: Contains generic UI elements (Button, Card, Input, etc.).
+ - **src/components/main/**: Contains feature-specific components (Market, Hero, Misc).
+ - **src/components/context/**: React context providers.
+ - **src/components/hooks/**: Custom React hooks.
+ - **src/components/lib/**: Utility libraries and Supabase client.
+ - **src/components/provider/**: Theme and global providers.
 
-## Learn More
+ ---
 
-To learn more about Next.js, take a look at the following resources:
+ ## Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+ 1. **Install dependencies:**
+		```bash
+		npm install
+		```
+ 2. **Run the development server:**
+		```bash
+		npm run dev
+		```
+ 3. **Open [http://localhost:3000](http://localhost:3000) in your browser.**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+ ---
 
-## Deploy on Vercel
+ ## Components Usage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+ ### UI Components (`src/components/ui/`)
+ - Import and use in your pages or other components:
+	 ```tsx
+	 import { Button } from '@/components/ui/button';
+	 import { Card } from '@/components/ui/card';
+	 // ...other UI components
+	 ```
+ - Props are documented in each component file. Most UI components are styled and composable.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+ ### Main Components (`src/components/main/`)
+ - **Market:**
+	 - `market-navbar.tsx`, `market-page.tsx`, `market-sidebar.tsx`, etc.
+	 - Used for building market-related pages and features.
+	 - Example:
+		 ```tsx
+		 import MarketSidebar from '@/components/main/market/market-sidebar';
+		 <MarketSidebar />
+		 ```
+ - **Hero:**
+	 - `home.tsx` for homepage hero section.
+ - **Misc:**
+	 - Carousel, skeletons, sorters, etc.
+
+ ### App Layout (`src/components/app-layout/`)
+ - Provides the main layout structure for the app.
+ - Example:
+	 ```tsx
+	 import AppLayout from '@/components/app-layout/app-layout';
+	 <AppLayout>{children}</AppLayout>
+	 ```
+
+ ### Logos (`src/components/logos/`)
+ - SVG and logo components for branding.
+
+ ---
+
+ ## Pages Usage
+
+ - **src/app/page.tsx**: Main landing page.
+ - **src/app/layout.tsx**: Root layout, wraps all pages.
+ - **src/app/api/markets/route.ts**: API route for market data.
+
+ To create a new page, add a file under `src/app/` and export a React component:
+ ```tsx
+ // src/app/new-page.tsx
+ export default function NewPage() {
+	 return <div>New Page Content</div>;
+ }
+ ```
+
+ ---
+
+ ## Custom Hooks & Context
+
+ - **Hooks:**
+	 - `use-toast.ts`: Toast notification hook.
+	 - Usage:
+		 ```tsx
+		 import { useToast } from '@/components/hooks/use-toast';
+		 const { toast } = useToast();
+		 toast('Message');
+		 ```
+ - **Context:**
+	 - `layout-context.tsx`: Provides layout state/context.
+	 - Usage:
+		 ```tsx
+		 import { LayoutProvider } from '@/components/context/layout-context';
+		 <LayoutProvider>{children}</LayoutProvider>
+		 ```
+
+ ---
+
+ ## Utilities
+
+ - **Supabase Client:**
+	 - `lib/supabase-client.ts`: For database interactions.
+ - **General Utilities:**
+	 - `lib/utils.ts`: Helper functions.
+
+ ---
+
+ ## Contributing
+
+ 1. Fork the repository.
+ 2. Create a new branch (`git checkout -b feature-name`).
+ 3. Make your changes and commit them.
+ 4. Open a pull request.
+
+ ---
+
+ ## License
+
+ This project is licensed under the MIT License.
