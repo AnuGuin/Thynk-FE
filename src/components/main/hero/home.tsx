@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import MarketSidebar from "../market/sidebar"
+import MarketSidebar from "../market/market-sidebar"
 
 export default function HomeHero() {
   return (
@@ -17,4 +17,4 @@ export default function HomeHero() {
       </main>
     </div>
   )
-}
+} 

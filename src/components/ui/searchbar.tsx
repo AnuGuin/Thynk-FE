@@ -1,6 +1,4 @@
 import React, { useState, ChangeEvent } from 'react';
-
-// Define the props for the SearchBar component
 interface SearchBarProps {
   onSearch: (searchTerm: string) => void; 
   placeholder?: string; 
