@@ -11,7 +11,7 @@ import { motion } from "motion/react"
 
 const links = [
   { label: "Home", href: "/", icon: <Icons.HomeLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
-  { label: "Market", href: "/market", icon: <Icons.MarketLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
+  { label: "Market", href: "/markets", icon: <Icons.MarketLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
   { label: "Leaderboard", href: "/leaderboard", icon: <Icons.LeaderBoardLight className="h-8 w-8 shrink-0 text-neutral-700 dark:text-neutral-200" /> },
 ]
 

@@ -19,23 +19,26 @@ const AppLayoutContent: React.FC<AppLayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-100 dark:bg-neutral-800">
+    <>
+      <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-neutral-900">
       {/* Sidebar - persists across navigation */}
       <MarketSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col">
+  {/* Main Content Area */}
+  {/* Add min-h-0 so children with overflow can be sized correctly inside the flex column */}
+  <div className="flex flex-1 flex-col min-h-0 min-w-0">
         {/* Navbar - persists across navigation */}
         <MarketNavbar onSearch={handleSearch} />
         
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="h-full bg-white p-6 md:p-10 dark:bg-neutral-900">
+        <main className="flex-1 overflow-auto min-w-0 w-full">
+          <div className="w-full bg-white p-6 md:p-10 dark:bg-neutral-900">
             {children}
           </div>
         </main>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

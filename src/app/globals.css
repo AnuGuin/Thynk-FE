@@ -167,7 +167,21 @@
 
 @layer base {
   * {
+    /* Use border-box so padding doesn't add to element's height which helps avoid accidental overflow */
+    box-sizing: border-box;
     @apply border-border outline-ring/50;
+  }
+  /* Ensure the root elements take full height and reset default body margin to prevent
+     accidental viewport overflow which can cause an unwanted scrollbar. */
+  html, body, #__next {
+    height: 100%;
+    margin: 0;
+  }
+  /* Prevent any horizontal overflow caused by elements using vw/100vw or
+     animations that move content offscreen. This stops the navbar from
+     rendering wider than the viewport in edge cases. */
+  html, body {
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;

@@ -1,9 +1,9 @@
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState, useRef, useEffect } from "react";
 import { useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
 import { prepareContractCall, readContract } from "thirdweb";
-import { contract, tokenContract } from "../../../constant/contract";
+import { contract, tokenContract } from "@/constant/contract";
 import { approve } from "thirdweb/extensions/erc20";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
     const [buyingStep, setBuyingStep] = useState<BuyingStep>('initial');
     const [isApproving, setIsApproving] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
+    const [approvalAmountStr, setApprovalAmountStr] = useState<string | null>(null);
 
     // Add to state variables
     const [error, setError] = useState<string | null>(null);
@@ -87,15 +88,30 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
 
         try {
             // USDC has 6 decimals, so multiply by 10^6
-            const amountInUSDC = BigInt(Math.floor(numericAmount * 10**6));
-            
-            const userAllowance = await readContract({
+            const amountInUSDC = BigInt(Math.floor(numericAmount * 10 ** 6));
+
+            const userAllowanceRaw = await readContract({
                 contract: tokenContract,
                 method: "function allowance(address owner, address spender) view returns (uint256)",
                 params: [account?.address as string, contract.address]
             });
 
-            setBuyingStep(userAllowance < amountInUSDC ? 'allowance' : 'confirm');
+            // normalize allowance to bigint
+            let userAllowance: bigint = BigInt(0);
+            try {
+                userAllowance = BigInt(String(userAllowanceRaw ?? '0'));
+            } catch (err) {
+                console.error('Failed to parse allowance value', err);
+                userAllowance = BigInt(0);
+            }
+
+            if (userAllowance < amountInUSDC) {
+                setApprovalAmountStr(amountInUSDC.toString());
+                setBuyingStep('allowance');
+            } else {
+                setApprovalAmountStr(null);
+                setBuyingStep('confirm');
+            }
         } catch (error) {
             console.error(error);
         }
@@ -105,13 +121,15 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
     const handleSetApproval = async () => {
         setIsApproving(true);
         try {
-            // Approve 1 million USDC (1,000,000 * 10^6) to avoid repeated approvals
-            const approvalAmount = 1_000_000 * 10**6;
-            
+            // Approve the exact requested amount (if stored) or fallback to 1 million USDC
+            const fallback = (BigInt(1_000_000) * BigInt(10 ** 6)).toString();
+            const approvalAmountToSend = approvalAmountStr ?? fallback;
+
             const tx = await approve({
                 contract: tokenContract,
                 spender: contract.address,
-                amount: approvalAmount
+                // thirdweb expects string | number
+                amount: approvalAmountToSend,
             });
             await mutateTransaction(tx);
             setBuyingStep('confirm');
@@ -204,6 +222,9 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                             <div className="flex flex-col border-2 border-gray-200 rounded-lg p-4">
                                 <h2 className="text-lg font-bold mb-4">Approval Needed</h2>
                                 <p className="mb-4">You need to approve the transaction before proceeding.</p>
+                                {approvalAmountStr && (
+                                    <p className="mb-4 text-sm text-neutral-700">Approve <span className="font-semibold">{(BigInt(approvalAmountStr) / BigInt(10 ** 6)).toString()} USDC</span> to allow spending for this purchase.</p>
+                                )}
                                 <div className="flex justify-end">
                                     <Button 
                                         onClick={handleSetApproval} 
@@ -278,7 +299,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                                                 step="0.01"
                                                 placeholder=""
                                                 value={amount}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                onChange={(e) => {
                                                     const value = e.target.value;
                                                     // Allow empty string or valid numbers
                                                     if (value === '' || (!isNaN(Number(value)) && Number(value) >= 0)) {
@@ -286,7 +307,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                                                         setError(null);
                                                     }
                                                 }}
-                                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                                                onKeyDown={(e) => {
                                                     if (e.key === '-' || e.key === 'e' || e.key === '+') {
                                                         e.preventDefault();
                                                     }
@@ -301,7 +322,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                                             {selectedOption === 'A' ? market.optionA : market.optionB}
                                         </span>
                                     </div>
-                                    <div className="min-h-5">
+                                    <div className="min-h-[20px]">
                                         {error && (
                                             <span className="text-sm text-red-500">
                                                 {error}

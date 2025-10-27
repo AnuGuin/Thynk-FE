@@ -8,12 +8,28 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const marketId = searchParams.get('market_id')
-
+    // If no market_id is specified, return a list of recent markets
     if (!marketId) {
-      return NextResponse.json({ error: 'market_id is required' }, { status: 400 })
+      try {
+        const { data, error } = await supabase
+          .from('markets')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50)
+
+        if (error) {
+          console.error('Supabase list error:', error)
+          return NextResponse.json({ error: 'Database error' }, { status: 500 })
+        }
+
+        return NextResponse.json(data || [])
+      } catch (err) {
+        console.error('Failed to fetch markets list:', err)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      }
     }
 
-    // Fetch market details from Supabase
+    // Fetch single market details from Supabase when market_id provided
     const { data, error } = await supabase
       .from('markets')
       .select('*')
@@ -40,6 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!market_id || !description || !image_url || !proposer_address) {
+      console.error('Validation failed: Missing required fields')
       return NextResponse.json(
         { error: 'market_id, description, image_url, and proposer_address are required' },
         { status: 400 }
@@ -54,8 +71,16 @@ export async function POST(request: NextRequest) {
         params: [BigInt(market_id)],
       })
 
-      // Compare addresses (case-insensitive)
+      if (!contractProposer) {
+        console.error('On-chain verification failed: No proposer address returned')
+        return NextResponse.json(
+          { error: 'Failed to verify proposer on-chain' },
+          { status: 500 }
+        )
+      }
+
       if (contractProposer.toLowerCase() !== proposer_address.toLowerCase()) {
+        console.error('Proposer address mismatch:', { contractProposer, proposer_address })
         return NextResponse.json(
           { error: 'Proposer address verification failed' },
           { status: 403 }
@@ -86,6 +111,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save market data' }, { status: 500 })
     }
 
+    console.log('Market successfully saved:', data)
     return NextResponse.json(data[0])
   } catch (error) {
     console.error('POST /api/markets error:', error)

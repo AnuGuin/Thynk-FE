@@ -24,7 +24,8 @@ import {
 interface ProposeMarketFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onMarketCreated: () => void;
+  // optional market object passed back after successful creation (off-chain row)
+  onMarketCreated: (market?: { market_id: number; description?: string; image_url?: string; proposer_address?: string; tag?: string }) => void;
 }
 
 const MARKET_TAGS = ['Crypto', 'Sports', 'Politics', 'Environment', 'Misc', 'Gaming'];
@@ -56,7 +57,8 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
   const [isApproving, setIsApproving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const requiredUSDC = BigInt(100000000); // 100 USDC with 6 decimals
+  // Minimum stake required to propose a market: 1 USDC (USDC has 6 decimals)
+  const requiredUSDC = BigInt(1000000); // 1 USDC with 6 decimals
   const hasEnoughBalance = usdcBalance ? usdcBalance >= requiredUSDC : false;
 
   const handleInputChange = (field: string, value: string) => {
@@ -92,7 +94,7 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
 
       if (error) {
         console.error('Upload error:', error);
-        throw error;
+        throw new Error('Image upload failed. Please try again.');
       }
 
       const { data: { publicUrl } } = supabase.storage
@@ -155,7 +157,6 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
     }
 
     try {
-      // Step 1: Upload image to Supabase storage
       toast({
         title: "Uploading Image",
         description: "Please wait while we upload your image...",
@@ -173,11 +174,11 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
 
       setIsApproving(true);
 
-      // Step 2: Approve USDC transfer
+      const approveAmountHuman = (Number(requiredUSDC) / 1e6).toString();
       const approveTx = approve({
         contract: tokenContract,
         spender: contract.address,
-        amount: requiredUSDC.toString(),
+        amount: approveAmountHuman,
       });
 
       await new Promise((resolve, reject) => {
@@ -200,7 +201,6 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
         description: "Now creating your market on-chain...",
       });
 
-      // Step 3: Send on-chain transaction to propose market
       const resolutionTimestamp = Math.floor(new Date(formData.resolutionTimestamp).getTime() / 1000);
 
       const proposeTx = prepareContractCall({
@@ -233,7 +233,6 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
         client: contract.client,
       });
 
-      // Parse event logs to get marketId
       let marketId: bigint | null = null;
       let retryCount = 0;
       const maxRetries = 3;
@@ -277,21 +276,6 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
         description: "Your market has been created on-chain. Saving additional details...",
       });
 
-      // Reset form and close modal
-      setFormData({
-        question: "",
-        optionA: "",
-        optionB: "",
-        resolutionTimestamp: "",
-        description: "",
-        tag: "",
-      });
-      setSelectedImage(null);
-      setImagePreview(null);
-      onClose();
-      onMarketCreated();
-
-      // Step 4: Save off-chain data to API
       const response = await fetch('/api/markets', {
         method: 'POST',
         headers: {
@@ -315,6 +299,29 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
         title: "Details Saved",
         description: "Market image and description have been saved.",
       });
+
+      const createdMarket = await response.json();
+
+      setFormData({
+        question: "",
+        optionA: "",
+        optionB: "",
+        resolutionTimestamp: "",
+        description: "",
+        tag: "",
+      });
+      setSelectedImage(null);
+      setImagePreview(null);
+      onClose();
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('market:created', { detail: createdMarket }));
+        }
+      } catch (err) {
+        console.warn('Failed to dispatch market:created event', err);
+      }
+
+      onMarketCreated(createdMarket);
 
     } catch (error) {
       console.error("Error proposing market:", error);
@@ -458,7 +465,7 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
 
           <div className="space-y-2 rounded-lg bg-muted p-3">
             <p className="text-sm text-muted-foreground">
-              <strong>Stake Required:</strong> 100 USDC will be locked as collateral. You will get it back if your market is resolved fairly, or it may be slashed for invalid/spam markets.
+              <strong>Stake Required:</strong> 1 USDC will be locked as collateral. You will get it back if your market is resolved fairly, or it may be slashed for invalid/spam markets.
             </p>
             {usdcBalance !== undefined && (
               <div className="text-sm">
@@ -472,7 +479,7 @@ export function ProposeMarketForm({ isOpen, onClose, onMarketCreated }: ProposeM
               <div className="flex items-start gap-2 rounded bg-red-50 p-2 text-sm text-red-600 dark:bg-red-950/20">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Insufficient USDC balance. You need 100 USDC to create a market. 
+                  Insufficient USDC balance. You need 1 USDC to create a market.
                   Please get testnet USDC from a faucet first.
                 </p>
               </div>
